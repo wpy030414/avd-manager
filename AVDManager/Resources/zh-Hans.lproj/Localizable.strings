@@ -1,0 +1,86 @@
+/* 应用级字符串 */
+"app_name" = "AVD管理器";
+"window_title" = "AVD管理器";
+
+/* 空/占位状态 */
+"avd_list_empty" = "没有找到 AVD。";
+"select_avd_hint" = "选择一个 AVD 查看详情";
+"search_placeholder" = "搜索 AVD";
+
+/* 工具栏/操作 */
+"start" = "启动";
+"stop" = "停止";
+"create" = "创建";
+"delete" = "删除";
+"image_management" = "镜像管理";
+"install_apk" = "安装 APK";
+"open_folder" = "打开共享文件夹";
+"open_shared_folder" = "打开共享文件夹 (Mac ↔ 模拟器)";
+"refresh" = "刷新";
+"cancel" = "取消";
+"done" = "完成";
+"download" = "下载";
+"install" = "安装";
+"installed" = "已安装";
+"installing" = "正在安装…";
+"install_done" = "安装完成";
+"choose_apk" = "选择 APK";
+"target_avd" = "目标 AVD";
+
+/* 创建 AVD */
+"create_avd_title" = "新建 AVD";
+"avd_name" = "AVD 名称";
+"system_image" = "系统镜像";
+"device_skin" = "设备外观";
+
+/* 详情页 */
+"detail_device" = "设备";
+"detail_target" = "目标";
+"detail_abi" = "ABI";
+"detail_skin" = "外观";
+"detail_api" = "API 级别";
+"detail_path" = "路径";
+"detail_size" = "大小";
+"detail_last_boot" = "上次启动";
+"detail_actions" = "操作";
+
+/* 窗口管理 */
+"bring_to_front" = "置顶";
+"minimize" = "最小化";
+"close_window" = "关闭窗口";
+
+/* 状态 */
+"state_stopped" = "已停止";
+"state_booting" = "启动中";
+"state_running" = "运行中";
+"state_stopping" = "停止中";
+"state_error" = "错误";
+
+/* 设置进度 */
+"env_manage" = "环境管理";
+"setup_locating" = "正在定位 Android SDK…";
+"setup_verifying" = "正在验证 SDK 组件…";
+
+/* 外观 */
+"appearance" = "外观";
+"appearance_system" = "跟随系统";
+"appearance_light" = "浅色";
+"appearance_dark" = "深色";
+
+/* 系统镜像 */
+"system.image.description" = "Android %1$d (%2$@, %3$@)";
+
+/* 环境管理 */
+"env_deps_status" = "依赖状态";
+"env_missing_count" = "%d 项缺失";
+"env_all_ready" = "全部就绪";
+"env_paths" = "路径信息";
+"env_one_click_install" = "一键安装缺失依赖";
+"env_all_deps_ready" = "所有依赖已就绪";
+
+/* 镜像管理 */
+"search_images_placeholder" = "搜索 API 级别或变体…";
+"no_matching_images" = "没有匹配的系统镜像";
+"image_count_format" = "%d 个镜像";
+"delete_image_title" = "删除系统镜像";
+"delete_image_message" = "确定要删除 %@ 吗？";

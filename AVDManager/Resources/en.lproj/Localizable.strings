@@ -1,0 +1,86 @@
+/* Application-level strings */
+"app_name" = "AVD Manager";
+"window_title" = "AVD Manager";
+
+/* Empty / placeholder states */
+"avd_list_empty" = "No AVDs found.";
+"select_avd_hint" = "Select an AVD to view details";
+"search_placeholder" = "Search AVDs";
+
+/* Toolbar / actions */
+"start" = "Start";
+"stop" = "Stop";
+"create" = "Create";
+"delete" = "Delete";
+"image_management" = "Image Management";
+"install_apk" = "Install APK";
+"open_folder" = "Open Shared Folder";
+"open_shared_folder" = "Open Shared Folder (Mac ↔ Emulator)";
+"refresh" = "Refresh";
+"cancel" = "Cancel";
+"done" = "Done";
+"download" = "Download";
+"install" = "Install";
+"installed" = "Installed";
+"installing" = "Installing…";
+"install_done" = "Installation complete";
+"choose_apk" = "Choose APK";
+"target_avd" = "Target AVD";
+
+/* Create AVD sheet */
+"create_avd_title" = "Create AVD";
+"avd_name" = "AVD Name";
+"system_image" = "System Image";
+"device_skin" = "Device Skin";
+
+/* Detail view */
+"detail_device" = "Device";
+"detail_target" = "Target";
+"detail_abi" = "ABI";
+"detail_skin" = "Skin";
+"detail_api" = "API Level";
+"detail_path" = "Path";
+"detail_size" = "Size";
+"detail_last_boot" = "Last Boot";
+"detail_actions" = "Actions";
+
+/* Window management */
+"bring_to_front" = "Bring to Front";
+"minimize" = "Minimize";
+"close_window" = "Close Window";
+
+/* States */
+"state_stopped" = "Stopped";
+"state_booting" = "Booting";
+"state_running" = "Running";
+"state_stopping" = "Stopping";
+"state_error" = "Error";
+
+/* Setup panel */
+"env_manage" = "Environment";
+"setup_locating" = "Locating Android SDK…";
+"setup_verifying" = "Verifying SDK components…";
+
+/* Appearance */
+"appearance" = "Appearance";
+"appearance_system" = "System";
+"appearance_light" = "Light";
+"appearance_dark" = "Dark";
+
+/* System image */
+"system.image.description" = "Android %1$d (%2$@, %3$@)";
+
+/* Environment management */
+"env_deps_status" = "Dependencies";
+"env_missing_count" = "%d missing";
+"env_all_ready" = "All Ready";
+"env_paths" = "Paths";
+"env_one_click_install" = "Install Missing Dependencies";
+"env_all_deps_ready" = "All dependencies ready";
+
+/* Image management */
+"search_images_placeholder" = "Search API level or variant…";
+"no_matching_images" = "No matching system images";
+"image_count_format" = "%d images";
+"delete_image_title" = "Delete System Image";
+"delete_image_message" = "Are you sure you want to delete %@?";
