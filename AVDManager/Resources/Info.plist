@@ -9,9 +9,9 @@
     <key>CFBundleName</key>
     <string>AVD Manager</string>
     <key>CFBundleShortVersionString</key>
-    <string>26.7.16</string>
+    <string>26.7.16+1710</string>
     <key>CFBundleVersion</key>
-    <string>26.7.16+0530</string>
+    <string>26.7.16+1710</string>
     <key>LSMinimumSystemVersion</key>
     <string>27.0</string>
     <key>LSApplicationCategoryType</key>

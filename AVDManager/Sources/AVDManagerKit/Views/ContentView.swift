@@ -10,18 +10,8 @@ public struct ContentView: View {
     @State private var isEnvPresented = false
 
     @AppStorage("appearanceMode") private var appearanceMode: AppearanceMode = .system
+    @AppStorage("showLog") private var showLog = true
     @Environment(\.colorScheme) private var systemColorScheme
-
-    /// Build timestamp — read from the executable's modification date.
-    private static let buildTimestamp: String = {
-        guard let url = Bundle.main.executableURL,
-              let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
-              let date = attrs[.modificationDate] as? Date else { return "unknown" }
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        f.timeZone = TimeZone.current
-        return f.string(from: date)
-    }()
 
     private var effectiveColorScheme: ColorScheme {
         appearanceMode.colorScheme ?? systemColorScheme
@@ -50,22 +40,9 @@ public struct ContentView: View {
                     .frame(minWidth: 240, idealWidth: 270, maxWidth: 360)
                     .frame(width: 270)
 
-                Group {
-                    if let avd = viewModel.selectedAVD {
-                        AVDDetailView(avd: avd, viewModel: viewModel)
-                    } else {
-                        emptyDetail
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                rightPane
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-        }
-        .overlay(alignment: .bottomTrailing) {
-            Text("build \(Self.buildTimestamp)")
-                .font(.system(size: 9, design: .monospaced))
-                .foregroundStyle(.secondary.opacity(0.4))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
         }
         .preferredColorScheme(appearanceMode.colorScheme)
         .toolbar {
@@ -82,6 +59,7 @@ public struct ContentView: View {
                 HStack(spacing: 6) {
                     Divider()
                         .frame(height: 20)
+                    logToggle
                     appearanceToggle
                 }
                 .padding(.horizontal, 4)
@@ -124,6 +102,14 @@ public struct ContentView: View {
             icon: isLight ? "sun.max.fill" : "moon.fill",
             help: isLight ? NSLocalizedString("appearance_dark", comment: "") : NSLocalizedString("appearance_light", comment: ""),
             action: toggleAppearance
+        )
+    }
+
+    private var logToggle: some View {
+        toolbarCircle(
+            icon: showLog ? "terminal" : "terminal.fill",
+            help: showLog ? "隐藏日志" : "显示日志",
+            action: { showLog.toggle() }
         )
     }
 
@@ -301,6 +287,26 @@ public struct ContentView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Right Pane (detail + log)
+
+    private var rightPane: some View {
+        VStack(spacing: 0) {
+            if let avd = viewModel.selectedAVD {
+                AVDDetailView(avd: avd, viewModel: viewModel)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 0, maxHeight: 360)
+
+                if showLog {
+                    Divider()
+                    LogPanelView(store: viewModel.logStore(for: avd))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            } else {
+                emptyDetail
+            }
+        }
     }
 }
 

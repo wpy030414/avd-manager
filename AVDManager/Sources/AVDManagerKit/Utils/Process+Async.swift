@@ -1,7 +1,7 @@
 import Foundation
 
 /// Thread-safe line buffer used by streaming process runner.
-private final class LineBuffer: @unchecked Sendable {
+final class LineBuffer: @unchecked Sendable {
     private var data = Data()
     private let lock = NSLock()
     private let newline = Data([0x0A])

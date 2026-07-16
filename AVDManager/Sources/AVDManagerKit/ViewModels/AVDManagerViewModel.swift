@@ -102,13 +102,22 @@ public final class AVDManagerViewModel: ObservableObject {
 
     func start(avd: AVD, settings: EmulatorLaunchSettings = .init()) {
         DebugLog.log("start() called for AVD: \(avd.name), state: \(avd.state)")
+        let logStore = logStore(for: avd)
+        logStore.append(level: .info, "▶ Starting \(avd.name)...")
         updateState(for: avd.id, to: .booting)
         DebugLog.log("state updated to booting, emuPath=\(emulatorPath ?? "nil")")
+        // Capture weakly so the closure is safe to pass across to the actor service.
+        let onLog: @Sendable (String) -> Void = { line in
+            Task { @MainActor in
+                logStore.append(level: .output, line)
+            }
+        }
         Task {
             do {
                 DebugLog.log("launching emulator for: \(avd.name)")
-                let (_, port) = try await emulatorService.start(avd, settings: settings)
+                let (_, port) = try await emulatorService.start(avd, settings: settings, onLog: onLog)
                 DebugLog.log("emulator launched on port: \(port)")
+                logStore.append(level: .info, "✓ emulator process launched on port \(port)")
                 // Store the port immediately so matching works
                 if let idx = avds.firstIndex(where: { $0.id == avd.id }) {
                     avds[idx].consolePort = port
@@ -123,15 +132,18 @@ public final class AVDManagerViewModel: ObservableObject {
                 do {
                     try await emulatorService.waitForBoot(avdName: avd.name, timeoutSeconds: 180)
                     updateState(for: avd.id, to: .running)
+                    logStore.append(level: .info, "✓ \(avd.name) boot completed")
                 } catch {
                     // If boot polling fails, do a final refresh to get current state
                     let final = await emulatorService.refreshStates(for: avds)
                     for updated in final {
                         updateState(for: updated.id, to: updated.state)
                     }
+                    logStore.append(level: .error, "✗ boot polling failed: \(error.localizedDescription)")
                 }
             } catch {
                 DebugLog.log("start FAILED: \(error.localizedDescription)")
+                logStore.append(level: .error, "✗ start failed: \(error.localizedDescription)")
                 updateState(for: avd.id, to: .error)
                 setupProgress = .error(error.localizedDescription)
             }
@@ -140,6 +152,7 @@ public final class AVDManagerViewModel: ObservableObject {
 
     func stop(avd: AVD) {
         updateState(for: avd.id, to: .stopping)
+        logStore(for: avd).append(level: .info, "■ Stopping \(avd.name)...")
         // Look up current state from array (port may have been updated after start)
         let current = avds.first(where: { $0.id == avd.id }) ?? avd
         Task {
@@ -151,12 +164,14 @@ public final class AVDManagerViewModel: ObservableObject {
                 for updated in refreshed {
                     updateState(for: updated.id, to: updated.state)
                 }
+                logStore(for: avd).append(level: .info, "✓ \(avd.name) stopped")
             } catch {
                 // Even on error, refresh to get real state
                 let refreshed = await emulatorService.refreshStates(for: avds)
                 for updated in refreshed {
                     updateState(for: updated.id, to: updated.state)
                 }
+                logStore(for: avd).append(level: .error, "✗ stop failed: \(error.localizedDescription)")
                 if current.state != .stopped {
                     setupProgress = .error(error.localizedDescription)
                 }
@@ -170,6 +185,7 @@ public final class AVDManagerViewModel: ObservableObject {
                 try await avdService.deleteAVD(name: avd.name)
                 avds.removeAll { $0.id == avd.id }
                 if selectedAVD?.id == avd.id { selectedAVD = nil }
+                logStores.removeValue(forKey: avd.id)
             } catch {
                 setupProgress = .error(error.localizedDescription)
             }
@@ -264,6 +280,23 @@ public final class AVDManagerViewModel: ObservableObject {
     @Published public var isInstallingDeps = false
     @Published public var installMessage: String = ""
     @Published public var installPercent: Double = 0
+
+    /// Per-AVD emulator startup logs, keyed by AVD id.
+    /// Each AVD keeps its own log so switching the detail view shows that
+    /// AVD's output rather than a shared history.
+    @MainActor
+    private var logStores: [UUID: LogStore] = [:]
+
+    /// Returns the log store for a given AVD, creating one on first access.
+    @MainActor
+    public func logStore(for avd: AVD) -> LogStore {
+        if let existing = logStores[avd.id] {
+            return existing
+        }
+        let store = LogStore()
+        logStores[avd.id] = store
+        return store
+    }
 
     func checkDependencies() {
         dependencyStatus = sdk.checkDependencies()

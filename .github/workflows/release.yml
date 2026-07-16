@@ -1,0 +1,74 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # 构建依赖 macOS 27 SDK，它只随特定 Xcode 分发。
+    # macos-15 runner 搭载最新 Xcode，最可能已内置 macOS 27 SDK。
+    # 若本 runner 的 Xcode 没有 macOS 27 SDK，把 runs-on 改成 macos-14 即可。
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode (xcode-select)
+        run: |
+          echo "Installed Xcodes on this runner:"
+          ls -1d /Applications/Xcode*.app 2>/dev/null || true
+
+          # 从 Xcode_26.3.0.app 这类路径里挑版本最高的（macOS 27 SDK 在其中）
+          LATEST=""
+          LATEST_VER=""
+          for xcode in /Applications/Xcode_*.app; do
+            ver=$(basename "$xcode" .app | sed 's/^Xcode_//')
+            if [ -z "$LATEST_VER" ] || \
+               [ "$(printf '%s\n%s\n' "$ver" "$LATEST_VER" | sort -V | tail -1)" = "$ver" ]; then
+              LATEST_VER="$ver"
+              LATEST="$xcode"
+            fi
+          done
+
+          if [ -z "$LATEST" ]; then
+            LATEST="/Applications/Xcode.app"
+          fi
+
+          echo "Selected: $LATEST"
+          sudo xcode-select -s "$LATEST"
+          echo "DEVELOPER_DIR=$(xcode-select -p)" >> "$GITHUB_ENV"
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i macosx || true
+          swift --version
+
+      - name: Build .app (release + ad-hoc sign)
+        run: |
+          cd AVDManager
+          ./scripts/bundle-app.sh
+
+      - name: Zip .app
+        run: ditto -c -k --keepParent AVDManager/AVDManager.app AVDManager/AVDManager.zip
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" AVDManager/Resources/Info.plist)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Read version: $VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: AVD Manager ${{ steps.version.outputs.version }}
+          body: ''
+          files: AVDManager/AVDManager.zip
+          fail_on_unmatched_files: true

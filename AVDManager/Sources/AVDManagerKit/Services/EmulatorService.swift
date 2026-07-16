@@ -32,7 +32,11 @@ public actor EmulatorService {
         return port
     }
 
-    public func start(_ avd: AVD, settings: EmulatorLaunchSettings = .init()) async throws -> (process: Process, port: Int) {
+    public func start(
+        _ avd: AVD,
+        settings: EmulatorLaunchSettings = .init(),
+        onLog: (@Sendable (String) -> Void)? = nil
+    ) async throws -> (process: Process, port: Int) {
         guard let emulatorPath = await sdk.emulatorPath else {
             DebugLog.log("ERROR: emulatorPath is nil! sdkRoot=\(await sdk.sdkRootPath ?? "nil")")
             throw AVDManagerError.missingSDK
@@ -53,13 +57,45 @@ public actor EmulatorService {
         process.executableURL = URL(fileURLWithPath: emulatorPath)
         process.arguments = args
         process.environment = env
-        // Redirect emulator stderr to temp file for crash debugging
-        let errURL = URL(fileURLWithPath: "/tmp/avdmanager-emu-err.log")
-        FileManager.default.createFile(atPath: errURL.path, contents: nil)
-        if let errFH = try? FileHandle(forWritingTo: errURL) {
-            process.standardError = errFH
+
+        if let onLog {
+            // Stream emulator stdout + stderr to the log UI line by line.
+            let stdoutPipe = Pipe()
+            let stderrPipe = Pipe()
+            process.standardOutput = stdoutPipe
+            process.standardError = stderrPipe
+
+            let lineBuffer = LineBuffer()
+            stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
+                let data = handle.availableData
+                guard !data.isEmpty else { return }
+                for line in lineBuffer.append(data) {
+                    onLog(line)
+                }
+            }
+            stderrPipe.fileHandleForReading.readabilityHandler = { handle in
+                let data = handle.availableData
+                guard !data.isEmpty else { return }
+                for line in lineBuffer.append(data) {
+                    onLog(line)
+                }
+            }
+            process.terminationHandler = { _ in
+                stdoutPipe.fileHandleForReading.readabilityHandler = nil
+                stderrPipe.fileHandleForReading.readabilityHandler = nil
+                if let line = lineBuffer.drain(), !line.isEmpty {
+                    onLog(line)
+                }
+            }
+        } else {
+            // Fallback: redirect stderr to temp file for crash debugging.
+            let errURL = URL(fileURLWithPath: "/tmp/avdmanager-emu-err.log")
+            FileManager.default.createFile(atPath: errURL.path, contents: nil)
+            if let errFH = try? FileHandle(forWritingTo: errURL) {
+                process.standardError = errFH
+            }
+            process.standardOutput = FileHandle.nullDevice
         }
-        process.standardOutput = FileHandle.nullDevice
 
         try process.run()
         DebugLog.log("emulator process launched pid=\(process.processIdentifier)")
